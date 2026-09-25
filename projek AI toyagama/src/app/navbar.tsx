@@ -21,7 +21,7 @@ export default function Navbar() {
     }
   > = {
     "/beranda": {
-      title: "ICU-Q Dashboard",
+      title: "MyToyagama",
       subtitle: sessionText,
     },
 
