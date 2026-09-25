@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import {
   CircleMarker,
@@ -20,6 +20,10 @@ import type {
   ToyagamaLocation,
 } from "@/lib/locations";
 
+import type {
+  RoadNode,
+} from "@/lib/roadNetwork";
+
 import {
   roadNodes,
   roadEdges,
@@ -38,6 +42,14 @@ type LocationsMapProps = {
   locations: ToyagamaLocation[];
   userLocation: UserLocation | null;
   selectedLocation: ToyagamaLocation | null;
+
+  /**
+   * Hasil algoritma A*
+   *
+   * Berisi urutan node yang membentuk
+   * rute dari posisi pengguna menuju tujuan.
+   */
+  route: RoadNode[] | null;
 };
 
 /* =========================================================
@@ -159,6 +171,7 @@ export default function LocationsMap({
   locations,
   userLocation,
   selectedLocation,
+  route,
 }: LocationsMapProps) {
   const defaultCenter: [
     number,
@@ -168,14 +181,43 @@ export default function LocationsMap({
     110.3695,
   ];
 
+  /* =======================================================
+     ROAD NODE LOOKUP
+     
+     Daripada menggunakan roadNodes.find() berulang kali
+     untuk setiap edge, kita buat Map berdasarkan node ID.
+     ======================================================= */
+
+  const roadNodeMap =
+    useMemo(() => {
+      const map =
+        new Map<
+          string,
+          RoadNode
+        >();
+
+      for (
+        const node of roadNodes
+      ) {
+        map.set(
+          node.id,
+          node
+        );
+      }
+
+      return map;
+    }, []);
+
   return (
     <div className="h-full w-full overflow-hidden rounded-2xl">
+
       <MapContainer
         center={defaultCenter}
         zoom={13}
         scrollWheelZoom={true}
         className="h-full w-full"
       >
+
         {/* =================================================
             BASE MAP
             ================================================= */}
@@ -199,23 +241,82 @@ export default function LocationsMap({
         />
 
         {/* =================================================
+            A* ROUTE
+            =================================================
+
+            Route berisi:
+
+            START
+              ↓
+            Node 1
+              ↓
+            Node 2
+              ↓
+            Node 3
+              ↓
+            GOAL
+
+            Semua node tersebut kemudian
+            digambar sebagai satu Polyline.
+            ================================================= */}
+
+        {route &&
+          route.length > 1 && (
+            <Polyline
+              positions={route.map(
+                (node) =>
+                  [
+                    node.latitude,
+                    node.longitude,
+                  ] as [
+                    number,
+                    number
+                  ]
+              )}
+              pathOptions={{
+                color:
+                  "#2563eb",
+                weight: 6,
+                opacity: 0.9,
+              }}
+            >
+              <Popup>
+                <div className="min-w-[180px]">
+
+                  <p className="font-semibold text-slate-800">
+                    Rute A*
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Rute dihitung menggunakan
+                    algoritma A* berdasarkan
+                    jaringan jalan.
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Jumlah node:{" "}
+                    {route.length}
+                  </p>
+
+                </div>
+              </Popup>
+            </Polyline>
+          )}
+
+        {/* =================================================
             ROAD EDGES
             ================================================= */}
 
         {roadEdges.map(
           (edge) => {
             const from =
-              roadNodes.find(
-                (node) =>
-                  node.id ===
-                  edge.from
+              roadNodeMap.get(
+                edge.from
               );
 
             const to =
-              roadNodes.find(
-                (node) =>
-                  node.id ===
-                  edge.to
+              roadNodeMap.get(
+                edge.to
               );
 
             if (
@@ -246,7 +347,9 @@ export default function LocationsMap({
                 }}
               >
                 <Popup>
+
                   <div className="min-w-[180px]">
+
                     <p className="font-semibold text-slate-800">
                       {edge.roadName ||
                         "Jalan"}
@@ -265,7 +368,9 @@ export default function LocationsMap({
                       )}{" "}
                       km
                     </p>
+
                   </div>
+
                 </Popup>
               </Polyline>
             );
@@ -288,14 +393,20 @@ export default function LocationsMap({
               pathOptions={{
                 color:
                   "#334155",
+
                 fillColor:
                   "#ffffff",
+
                 fillOpacity: 1,
+
                 weight: 1,
               }}
             >
+
               <Popup>
+
                 <div className="text-xs">
+
                   <p className="font-semibold text-slate-800">
                     Road Node
                   </p>
@@ -318,8 +429,11 @@ export default function LocationsMap({
                       6
                     )}
                   </p>
+
                 </div>
+
               </Popup>
+
             </CircleMarker>
           )
         )}
@@ -336,8 +450,11 @@ export default function LocationsMap({
             ]}
             icon={userIcon}
           >
+
             <Popup>
+
               <div className="text-sm">
+
                 <p className="font-semibold text-slate-800">
                   Lokasi Anda
                 </p>
@@ -360,8 +477,11 @@ export default function LocationsMap({
                     6
                   )}
                 </p>
+
               </div>
+
             </Popup>
+
           </Marker>
         )}
 
@@ -381,8 +501,11 @@ export default function LocationsMap({
                 toyagamaIcon
               }
             >
+
               <Popup>
+
                 <div className="min-w-[180px]">
+
                   <p className="font-semibold text-gray-800">
                     {location.name}
                   </p>
@@ -390,12 +513,17 @@ export default function LocationsMap({
                   <p className="mt-1 text-sm text-gray-500">
                     {location.address}
                   </p>
+
                 </div>
+
               </Popup>
+
             </Marker>
           )
         )}
+
       </MapContainer>
+
     </div>
   );
 }

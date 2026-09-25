@@ -40,7 +40,8 @@ type RoadsGeoJSON = {
    DATA
    ========================================================= */
 
-const roads = roadsData as unknown as RoadsGeoJSON;
+const roads =
+  roadsData as unknown as RoadsGeoJSON;
 
 /* =========================================================
    HAVERSINE DISTANCE
@@ -91,7 +92,7 @@ export function calculateRoadDistance(
 type Coordinate = [number, number];
 
 /*
- * GeoJSON menggunakan:
+ * GeoJSON:
  *
  * [longitude, latitude]
  */
@@ -125,8 +126,11 @@ function convertCoordinates(
       continue;
     }
 
-    const longitude = coordinate[0];
-    const latitude = coordinate[1];
+    const longitude =
+      coordinate[0];
+
+    const latitude =
+      coordinate[1];
 
     if (
       !Number.isFinite(latitude) ||
@@ -148,14 +152,6 @@ function convertCoordinates(
    NODE STORAGE
    ========================================================= */
 
-/*
- * Kita menggunakan Map supaya titik yang sama
- * tidak dibuat berkali-kali.
- *
- * Key:
- * latitude,longitude
- */
-
 const nodeMap =
   new Map<string, RoadNode>();
 
@@ -169,12 +165,9 @@ function createNodeKey(
   latitude: number,
   longitude: number
 ): string {
-  /*
-   * Pembulatan digunakan supaya dua koordinat
-   * yang secara praktis sama dianggap sebagai
-   * node yang sama.
-   */
-  return `${latitude.toFixed(7)},${longitude.toFixed(7)}`;
+  return `${latitude.toFixed(
+    7
+  )},${longitude.toFixed(7)}`;
 }
 
 /* =========================================================
@@ -185,10 +178,11 @@ function getOrCreateNode(
   latitude: number,
   longitude: number
 ): RoadNode {
-  const key = createNodeKey(
-    latitude,
-    longitude
-  );
+  const key =
+    createNodeKey(
+      latitude,
+      longitude
+    );
 
   const existingNode =
     nodeMap.get(key);
@@ -203,7 +197,10 @@ function getOrCreateNode(
     longitude,
   };
 
-  nodeMap.set(key, node);
+  nodeMap.set(
+    key,
+    node
+  );
 
   return node;
 }
@@ -219,7 +216,8 @@ function addEdge(
   highway: string | null
 ) {
   /*
-   * Jangan membuat edge jika titiknya sama.
+   * Jangan membuat edge jika
+   * titik awal dan akhir sama.
    */
   if (from.id === to.id) {
     return;
@@ -233,16 +231,39 @@ function addEdge(
       to.longitude
     );
 
-  const edge: RoadEdge = {
+  /*
+   * =====================================================
+   * EDGE A → B
+   * =====================================================
+   */
+
+  edgeList.push({
     id: `edge-${edgeList.length + 1}`,
     from: from.id,
     to: to.id,
     distance,
     roadName,
     highway,
-  };
+  });
 
-  edgeList.push(edge);
+  /*
+   * =====================================================
+   * EDGE B → A
+   *
+   * Untuk sementara jaringan jalan dibuat
+   * dua arah agar A* dapat mencari rute
+   * dari kedua arah.
+   * =====================================================
+   */
+
+  edgeList.push({
+    id: `edge-${edgeList.length + 1}`,
+    from: to.id,
+    to: from.id,
+    distance,
+    roadName,
+    highway,
+  });
 }
 
 /* =========================================================
@@ -256,37 +277,42 @@ function processLineString(
     | undefined
 ) {
   const converted =
-    convertCoordinates(coordinates);
+    convertCoordinates(
+      coordinates
+    );
 
   if (converted.length < 2) {
     return;
   }
 
   const roadName =
-    typeof properties?.name === "string"
+    typeof properties?.name ===
+    "string"
       ? properties.name
       : null;
 
   const highway =
-    typeof properties?.highway === "string"
+    typeof properties?.highway ===
+    "string"
       ? properties.highway
       : null;
 
   /*
-   * Setiap dua titik berurutan menjadi edge.
+   * Contoh:
    *
    * P1 ---- P2 ---- P3 ---- P4
    *
-   * menjadi:
+   * dibuat menjadi:
    *
-   * P1-P2
-   * P2-P3
-   * P3-P4
+   * P1 ↔ P2
+   * P2 ↔ P3
+   * P3 ↔ P4
    */
 
   for (
     let index = 0;
-    index < converted.length - 1;
+    index <
+    converted.length - 1;
     index++
   ) {
     const current =
@@ -297,10 +323,12 @@ function processLineString(
 
     /*
      * GeoJSON:
+     *
      * [longitude, latitude]
      *
-     * Leaflet:
-     * [latitude, longitude]
+     * RoadNode:
+     *
+     * latitude, longitude
      */
 
     const from =
@@ -334,11 +362,17 @@ function processMultiLineString(
     | Record<string, unknown>
     | undefined
 ) {
-  if (!Array.isArray(coordinates)) {
+  if (
+    !Array.isArray(
+      coordinates
+    )
+  ) {
     return;
   }
 
-  for (const line of coordinates) {
+  for (
+    const line of coordinates
+  ) {
     processLineString(
       line,
       properties
@@ -350,8 +384,15 @@ function processMultiLineString(
    BUILD ROAD NETWORK
    ========================================================= */
 
-if (Array.isArray(roads.features)) {
-  for (const feature of roads.features) {
+if (
+  Array.isArray(
+    roads.features
+  )
+) {
+  for (
+    const feature of
+      roads.features
+  ) {
     const geometry =
       feature.geometry;
 
@@ -386,10 +427,49 @@ if (Array.isArray(roads.features)) {
    ========================================================= */
 
 export const roadNodes: RoadNode[] =
-  Array.from(nodeMap.values());
+  Array.from(
+    nodeMap.values()
+  );
 
 export const roadEdges: RoadEdge[] =
   edgeList;
+
+/* =========================================================
+   DEBUG INFORMATION
+   ========================================================= */
+
+console.log(
+  "========== ROAD NETWORK =========="
+);
+
+console.log(
+  "Jumlah Road Nodes:",
+  roadNodes.length
+);
+
+console.log(
+  "Jumlah Road Edges:",
+  roadEdges.length
+);
+
+console.log(
+  "Jumlah OSM Features:",
+  roads.features?.length ?? 0
+);
+
+console.log(
+  "Sample Road Node:",
+  roadNodes[0]
+);
+
+console.log(
+  "Sample Road Edge:",
+  roadEdges[0]
+);
+
+console.log(
+  "=================================="
+);
 
 /* =========================================================
    HELPERS
@@ -407,7 +487,8 @@ export function getRoadNodeById(
   id: string
 ): RoadNode | undefined {
   return roadNodes.find(
-    (node) => node.id === id
+    (node) =>
+      node.id === id
   );
 }
 
@@ -417,8 +498,11 @@ export function getRoadNodeById(
 
 export function getRoadNetworkStatistics() {
   return {
-    nodeCount: roadNodes.length,
-    edgeCount: roadEdges.length,
+    nodeCount:
+      roadNodes.length,
+
+    edgeCount:
+      roadEdges.length,
   };
 }
 
@@ -430,7 +514,9 @@ export function findNearestRoadNode(
   latitude: number,
   longitude: number
 ): RoadNode | null {
-  if (roadNodes.length === 0) {
+  if (
+    roadNodes.length === 0
+  ) {
     return null;
   }
 
@@ -447,7 +533,8 @@ export function findNearestRoadNode(
 
   for (
     let index = 1;
-    index < roadNodes.length;
+    index <
+    roadNodes.length;
     index++
   ) {
     const node =
@@ -462,7 +549,8 @@ export function findNearestRoadNode(
       );
 
     if (
-      distance < nearestDistance
+      distance <
+      nearestDistance
     ) {
       nearestDistance =
         distance;
