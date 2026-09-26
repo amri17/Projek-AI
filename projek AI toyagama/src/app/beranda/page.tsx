@@ -364,6 +364,33 @@ export default function BerandaPage() {
     };
   }, []);
 
+    /* =====================================================
+     ROUTE CANCELLATION
+     ===================================================== */
+
+  useEffect(() => {
+    const handleRouteCancelled = () => {
+      console.log(
+        "=== RUTE DIBATALKAN ==="
+      );
+
+      setRoute(null);
+      setError("");
+    };
+
+    window.addEventListener(
+      "route-cancelled",
+      handleRouteCancelled
+    );
+
+    return () => {
+      window.removeEventListener(
+        "route-cancelled",
+        handleRouteCancelled
+      );
+    };
+  }, []);
+
   /* =====================================================
      A* ROUTING
      ===================================================== */
@@ -566,6 +593,7 @@ export default function BerandaPage() {
     );
 
     setError("");
+    window.dispatchEvent(new Event("route-found"));
   }, [
     routeRequested,
     userLocation,

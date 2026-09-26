@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaBars,
   FaLocationDot,
@@ -50,6 +50,27 @@ export default function Sidebar({
 
   const [searchQuery, setSearchQuery] =
     useState("");
+
+    const [routeFound, setRouteFound] =
+    useState(false);
+
+    useEffect(() => {
+    const handleRouteFound = () => {
+      setRouteFound(true);
+    };
+
+    window.addEventListener(
+      "route-found",
+      handleRouteFound
+    );
+
+    return () => {
+      window.removeEventListener(
+        "route-found",
+        handleRouteFound
+      );
+    };
+  }, []);
 
   const [
     selectedDestinationName,
@@ -161,9 +182,41 @@ export default function Sidebar({
     );
   };
 
+      /* =====================================================
+     BATALKAN RUTE
+     ===================================================== */
+
+  const handleCancelRoute = () => {
+    console.log(
+      "=== MEMBATALKAN RUTE ==="
+    );
+
+    localStorage.removeItem(
+      "toyagama-selected-destination"
+    );
+
+    setSelectedDestination(null);
+    setSelectedDestinationName(null);
+    setSearchQuery("");
+    setRouteFound(false);
+
+    // Sinkronkan peta (hapus marker tujuan)
+    window.dispatchEvent(
+      new Event("toyagama-destination-selected")
+    );
+
+    // Bersihkan rute di BerandaPage
+    window.dispatchEvent(
+      new Event("route-cancelled")
+    );
+  };
+
   const handleSelectDestination = (
     location: (typeof toyagamaLocations)[number]
   ) => {
+    setRouteFound(false);
+
+    window.dispatchEvent(new Event("route-cancelled"));
     const nearestNode =
       findNearestRoadNode(
         location.latitude,
@@ -563,6 +616,17 @@ window.dispatchEvent(
                     className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-[0.98]"
                   >
                     Cari Rute Terbaik
+                  </button>
+                )}
+                 {routeFound && (
+                  <button
+                    type="button"
+                    onClick={
+                      handleCancelRoute
+                    }
+                    className="mt-2 w-full rounded-lg bg-red-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.98]"
+                  >
+                    Batalkan Rute
                   </button>
                 )}
               </div>

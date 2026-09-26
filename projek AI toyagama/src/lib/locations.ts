@@ -100,7 +100,7 @@ export const toyagamaLocations: ToyagamaLocation[] = [
   },
   {
     id: 14,
-    name: "Toyagama Perpustaaakn FT UGM",
+    name: "Toyagama Perpustakaan FT UGM",
     address: "Komplek Fakultas Teknik UGM",
     latitude: -7.765662,
     longitude: 110.372539,

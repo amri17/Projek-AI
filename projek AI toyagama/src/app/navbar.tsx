@@ -83,6 +83,7 @@ export default function Navbar() {
             truncate
             text-2xl
             font-bold
+            pl-12
             text-gray-800
           "
         >
@@ -94,6 +95,7 @@ export default function Navbar() {
             truncate
             text-sm
             text-gray-500
+            pl-12
           "
         >
           {current.subtitle}
