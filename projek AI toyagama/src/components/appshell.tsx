@@ -58,8 +58,7 @@ export default function AppShell({
 
   const isAuthPage =
     pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/";
+    pathname === "/register";
 
   return (
     <>
@@ -75,7 +74,7 @@ export default function AppShell({
           <>
             <div
               className={`fixed top-0 right-0 z-40 transition-all duration-300 ${
-                isOpen ? "left-64" : "left-20"
+                isOpen ? "left-80" : "left-20"
               }`}
             >
               <Navbar />
@@ -83,12 +82,12 @@ export default function AppShell({
 
             <Sidebar
               isOpen={isOpen}
-                setIsOpenAction={setIsOpen}
+              setIsOpenAction={setIsOpen}
             />
 
             <main
               className={`min-h-screen transition-all duration-300 ${
-                isOpen ? "ml-64" : "ml-20"
+                isOpen ? "ml-80" : "ml-20"
               }`}
             >
               {children}

@@ -22,7 +22,7 @@ type SidebarProps = {
 
 const navItems = [
   {
-    href: "/beranda",
+    href: "/",
     label: "Cari Toyagama",
     icon: <CiGrid41 size={20} />,
   },
@@ -401,8 +401,8 @@ window.dispatchEvent(
             {navItems.map(
               (item) => {
                 const isActive =
-                  pathname ===
-                  item.href;
+                  pathname === item.href ||
+                  (item.href === "/" && pathname === "/beranda");
 
                 return (
                   <Link
